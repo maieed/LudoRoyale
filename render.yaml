@@ -21,7 +21,7 @@ services:
       - key: ALLOWED_ORIGINS
         sync: false
 
-  - type: static_site
+  - type: static
     name: ludo-frontend
     rootDir: frontend
     buildCommand: npm install && npm run build
