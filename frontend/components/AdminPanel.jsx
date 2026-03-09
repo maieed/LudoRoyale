@@ -33,40 +33,52 @@ const AdminPanel = () => {
   };
 
   return (
-    <div className="panel">
-      <h2>Admin Panel</h2>
-      <div className="row">
-        <input value={adminUserId} onChange={(e) => setAdminUserId(e.target.value)} placeholder="Admin user id" />
-        <input value={adminKey} onChange={(e) => setAdminKey(e.target.value)} placeholder="Admin API key" />
-        <button onClick={load}>Load Dashboard</button>
-      </div>
-
-      <div className="panel">
-        <h3>Pending Transactions</h3>
-        {pending.map((tx) => (
-          <div className="row" key={tx._id}>
-            <span>{tx.type} | {tx.amount} | {tx.reference}</span>
-            <button onClick={() => approve(tx._id, true)}>Approve</button>
-            <button onClick={() => approve(tx._id, false)}>Reject</button>
+    <div className="min-h-screen px-4 py-6">
+      <div className="mx-auto max-w-6xl space-y-4">
+        <div className="card p-5">
+          <h2 className="text-2xl font-bold">Admin Panel</h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <input className="rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2" value={adminUserId} onChange={(e) => setAdminUserId(e.target.value)} placeholder="Admin user id" />
+            <input className="rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2" value={adminKey} onChange={(e) => setAdminKey(e.target.value)} placeholder="Admin API key" />
+            <button className="btn-primary" onClick={load}>Load Dashboard</button>
           </div>
-        ))}
-      </div>
+        </div>
 
-      <div className="panel">
-        <h3>Users</h3>
-        {users.map((u) => (
-          <div className="row" key={u._id}>
-            <span>{u.username || u._id} | balance: {u.walletBalance}</span>
-            <button onClick={() => banToggle(u._id, u.banned)}>{u.banned ? "Unban" : "Ban"}</button>
+        <div className="card p-5">
+          <h3 className="text-lg font-bold">Pending Transactions</h3>
+          <div className="mt-3 space-y-2">
+            {pending.map((tx) => (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-700/70 bg-slate-900/50 px-3 py-2" key={tx._id}>
+                <span className="text-sm">{tx.type} | Rs {tx.amount} | {tx.reference}</span>
+                <div className="flex gap-2">
+                  <button className="rounded-lg bg-brandWin/20 px-3 py-1 text-brandWin" onClick={() => approve(tx._id, true)}>Approve</button>
+                  <button className="rounded-lg bg-red-500/20 px-3 py-1 text-red-200" onClick={() => approve(tx._id, false)}>Reject</button>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
 
-      <div className="panel">
-        <h3>Game History</h3>
-        {games.map((g) => (
-          <p key={g._id}>{g.roomId} | entry: {g.entryFee} | winner: {g.winner || "-"}</p>
-        ))}
+        <div className="card p-5">
+          <h3 className="text-lg font-bold">Users</h3>
+          <div className="mt-3 space-y-2">
+            {users.map((u) => (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-700/70 bg-slate-900/50 px-3 py-2" key={u._id}>
+                <span className="text-sm">{u.username || u._id} | balance: Rs {u.walletBalance}</span>
+                <button className="rounded-lg border border-brandYellow/60 px-3 py-1 text-brandYellow" onClick={() => banToggle(u._id, u.banned)}>{u.banned ? "Unban" : "Ban"}</button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="card p-5">
+          <h3 className="text-lg font-bold">Game History</h3>
+          <div className="mt-3 space-y-2">
+            {games.map((g) => (
+              <p key={g._id} className="rounded-lg border border-slate-700/70 bg-slate-900/50 px-3 py-2 text-sm">{g.roomId} | entry: Rs {g.entryFee} | winner: {g.winner || "-"}</p>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

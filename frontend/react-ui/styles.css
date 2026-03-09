@@ -1,24 +1,15 @@
-:root {
-  --bg: #0f172a;
-  --card: #111827;
-  --accent: #22c55e;
-  --text: #e5e7eb;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-brandBg text-slate-100;
 }
 
-* { box-sizing: border-box; }
-body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: radial-gradient(circle at top, #1f2937, #020617); color: var(--text); }
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-xl bg-brandYellow px-5 py-3 font-semibold text-slate-900 transition hover:scale-105 hover:brightness-110;
+}
 
-.app-shell { max-width: 1200px; margin: 0 auto; padding: 16px; }
-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-nav { display: flex; gap: 12px; }
-a { color: #93c5fd; text-decoration: none; }
-
-.panel { background: rgba(17, 24, 39, 0.9); border: 1px solid #374151; border-radius: 12px; padding: 16px; margin-top: 16px; }
-.row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-input, select, button { padding: 8px 10px; border-radius: 8px; border: 1px solid #4b5563; background: #0b1220; color: #e5e7eb; }
-button { cursor: pointer; background: #166534; border-color: #22c55e; }
-button:disabled { opacity: 0.55; cursor: not-allowed; }
-
-.board-wrap { width: 100%; max-width: 640px; aspect-ratio: 1; border: 1px solid #334155; border-radius: 10px; overflow: hidden; }
-.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
-.small { opacity: 0.8; font-size: 12px; }
+.card {
+  @apply rounded-2xl border border-slate-700/70 bg-brandCard/80 backdrop-blur;
+}
