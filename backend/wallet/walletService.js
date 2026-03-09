@@ -1,17 +1,33 @@
+const crypto = require("crypto");
 const User = require("../models/User");
 const Transaction = require("../models/Transaction");
 
+const makeStableUserToken = (value) => crypto.createHash("sha256").update(String(value)).digest("hex").slice(0, 18);
+
 class WalletService {
   async resolveUser(userKey) {
-    let user = await User.findOne({ externalId: userKey });
+    const externalId = String(userKey || "").trim();
+    if (!externalId) throw new Error("Invalid user id");
+
+    let user = await User.findOne({ externalId });
     if (!user) {
-      const safe = String(userKey).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 24) || `u${Date.now()}`;
-      user = await User.create({
-        externalId: userKey,
-        username: `player_${safe}`,
-        email: `${safe}@ludo.local`
-      });
+      const token = makeStableUserToken(externalId);
+      try {
+        user = await User.create({
+          externalId,
+          username: `player_${token}`,
+          email: `${token}@ludo.local`
+        });
+      } catch (err) {
+        if (err?.code === 11000) {
+          user = await User.findOne({ externalId });
+        } else {
+          throw err;
+        }
+      }
     }
+
+    if (!user) throw new Error("User provisioning failed");
     if (user.banned) throw new Error("User is banned");
     return user;
   }

@@ -3,10 +3,25 @@ import { useNavigate } from "react-router-dom";
 import { api, setHeaders } from "../react-ui/api";
 import { clearSession, getSession } from "../react-ui/auth";
 
-const posters = [
-  { id: 1, image: "https://images.unsplash.com/photo-1611996575749-79a3a250f948?auto=format&fit=crop&w=900&q=80", fee: 10 },
-  { id: 2, image: "https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=900&q=80", fee: 50 },
-  { id: 3, image: "https://images.unsplash.com/photo-1523875194681-bedd468c58bf?auto=format&fit=crop&w=900&q=80", fee: 100 }
+const tournaments = [
+  {
+    id: "classic-10",
+    name: "Classic Sprint",
+    image: "https://images.unsplash.com/photo-1611996575749-79a3a250f948?auto=format&fit=crop&w=900&q=80",
+    fee: 10
+  },
+  {
+    id: "pro-50",
+    name: "Pro Arena",
+    image: "https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=900&q=80",
+    fee: 50
+  },
+  {
+    id: "royal-100",
+    name: "Royal Knockout",
+    image: "https://images.unsplash.com/photo-1523875194681-bedd468c58bf?auto=format&fit=crop&w=900&q=80",
+    fee: 100
+  }
 ];
 
 const DashboardPage = () => {
@@ -22,17 +37,26 @@ const DashboardPage = () => {
   };
 
   useEffect(() => {
-    loadWallet().catch(() => setError("Could not load wallet"));
+    loadWallet().catch((err) => {
+      const msg = err?.response?.data?.error || err?.message || "Could not load wallet";
+      setError(msg);
+    });
   }, []);
 
-  const onPlay = (entryFee) => {
-    if (balance < entryFee) {
+  const onPlay = (tournament) => {
+    if (balance < tournament.fee) {
       setError("Insufficient Balance");
       return;
     }
 
     setError("");
-    navigate("/game", { state: { entryFee } });
+    navigate("/game", {
+      state: {
+        entryFee: tournament.fee,
+        tournamentName: tournament.name,
+        autoQueue: true
+      }
+    });
   };
 
   return (
@@ -44,20 +68,24 @@ const DashboardPage = () => {
             <p className="text-3xl font-black text-brandYellow">Rs {balance}</p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-sm font-bold">{(session.name || "U").slice(0, 1).toUpperCase()}</div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-sm font-bold">{(session?.name || "U").slice(0, 1).toUpperCase()}</div>
             <button className="rounded-xl border border-slate-600 px-4 py-2 text-sm hover:border-brandYellow" onClick={() => { clearSession(); navigate("/"); }}>Logout</button>
           </div>
         </div>
 
         {error && <div className="mb-4 rounded-xl border border-red-500/50 bg-red-500/10 px-4 py-3 text-red-200">{error}</div>}
 
+        <h2 className="mb-4 text-2xl font-black">Available Tournaments</h2>
         <div className="grid gap-5 md:grid-cols-3">
-          {posters.map((poster) => (
-            <article key={poster.id} className="card overflow-hidden transition hover:-translate-y-1 hover:shadow-glow">
-              <img src={poster.image} alt={`Room ${poster.id}`} className="h-48 w-full object-cover" />
+          {tournaments.map((tournament) => (
+            <article key={tournament.id} className="card overflow-hidden transition hover:-translate-y-1 hover:shadow-glow">
+              <img src={tournament.image} alt={tournament.name} className="h-48 w-full object-cover" />
               <div className="p-4">
-                <p className="text-lg font-bold">Entry Fee Rs {poster.fee}</p>
-                <button className="btn-primary mt-3 w-full" onClick={() => onPlay(poster.fee)}>Play</button>
+                <p className="text-lg font-bold">{tournament.name}</p>
+                <p className="mt-1 text-sm text-slate-300">Skill-based realtime room</p>
+                <button className="btn-primary mt-3 w-full" onClick={() => onPlay(tournament)}>
+                  Join {tournament.name} - Rs {tournament.fee}
+                </button>
               </div>
             </article>
           ))}

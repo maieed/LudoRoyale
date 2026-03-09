@@ -14,11 +14,14 @@ const Lobby = () => {
   const session = getSession();
   const userId = session?.userId;
   const entryFee = Number(location.state?.entryFee || 10);
+  const tournamentName = location.state?.tournamentName || "Quick Match";
+  const autoQueue = Boolean(location.state?.autoQueue);
 
   const [difficulty, setDifficulty] = useState("medium");
   const [roomId, setRoomId] = useState("");
   const [status, setStatus] = useState("Ready");
   const [state, setState] = useState(null);
+  const [queued, setQueued] = useState(false);
 
   useEffect(() => {
     if (!userId) {
@@ -51,10 +54,23 @@ const Lobby = () => {
     }
   }, [state]);
 
+  const play = () => {
+    if (!userId || queued) return;
+    setQueued(true);
+    setStatus("Waiting for opponent...");
+    socket.emit("joinQueue", { userId, entryFee, botDifficulty: difficulty });
+  };
+
+  useEffect(() => {
+    if (autoQueue && !queued) {
+      play();
+    }
+  }, [autoQueue, queued]);
+
   useEffect(() => {
     const onMatch = (payload) => {
       setRoomId(payload.roomId);
-      setStatus(payload.botAssigned ? "Matched with bot" : "Match found");
+      setStatus(payload.botAssigned ? "Bot assigned. Match starting..." : "Opponent found. Match starting...");
     };
 
     const onStart = (data) => {
@@ -69,11 +85,17 @@ const Lobby = () => {
 
     const onBoard = ({ state: nextState, winner }) => {
       if (nextState) setState(nextState);
-      if (winner) setStatus(`Winner: ${winner}`);
+      if (winner) {
+        setStatus(`Winner: ${winner}`);
+        setQueued(false);
+      }
     };
 
     const onTurn = ({ turn }) => setStatus(`Turn: ${turn}`);
-    const onEnd = ({ winner, reason }) => setStatus(winner ? `Game ended: ${winner}` : reason || "Game ended");
+    const onEnd = ({ winner, reason }) => {
+      setQueued(false);
+      setStatus(winner ? `Game ended: ${winner}` : reason || "Game ended");
+    };
 
     socket.on("matchFound", onMatch);
     socket.on("startGame", onStart);
@@ -92,11 +114,6 @@ const Lobby = () => {
     };
   }, []);
 
-  const play = () => {
-    setStatus("Searching for opponent...");
-    socket.emit("joinQueue", { userId, entryFee, botDifficulty: difficulty });
-  };
-
   const roll = () => {
     if (!roomId) return;
     socket.emit("rollDice", { roomId, playerId: userId });
@@ -112,8 +129,9 @@ const Lobby = () => {
       <div className="mx-auto max-w-6xl">
         <div className="card mb-5 flex flex-wrap items-center justify-between gap-4 p-4">
           <div>
-            <p className="text-xs uppercase tracking-widest text-slate-400">Game Room</p>
-            <p className="text-2xl font-black text-brandYellow">Entry Fee Rs {entryFee}</p>
+            <p className="text-xs uppercase tracking-widest text-slate-400">Tournament</p>
+            <p className="text-2xl font-black text-brandYellow">{tournamentName}</p>
+            <p className="mt-1 text-sm text-slate-300">Entry Fee: Rs {entryFee}</p>
           </div>
           <div className="flex items-center gap-3">
             <select className="rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
@@ -121,7 +139,7 @@ const Lobby = () => {
               <option value="medium">Medium Bot</option>
               <option value="hard">Hard Bot</option>
             </select>
-            <button className="btn-primary" onClick={play}>Play Match</button>
+            <button className="btn-primary" onClick={play} disabled={queued}>{queued ? "Matching..." : "Find Opponent"}</button>
             <button className="rounded-xl border border-slate-600 px-4 py-2 text-sm hover:border-brandYellow" onClick={() => navigate("/dashboard")}>Back</button>
           </div>
         </div>
@@ -133,7 +151,8 @@ const Lobby = () => {
 
           <aside className="card p-4">
             <p className="text-sm text-slate-300">{status}</p>
-            <p className="mt-2 text-xs text-slate-500">Room: {roomId || "-"}</p>
+            <p className="mt-2 text-xs text-slate-500">Room: {roomId || "Waiting..."}</p>
+
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button className="rounded-xl bg-brandYellow px-3 py-2 font-semibold text-slate-900 transition hover:brightness-110" onClick={roll}>Roll Dice</button>
               <button className="rounded-xl border border-brandWin/50 bg-brandWin/10 px-3 py-2 font-semibold text-brandWin transition hover:bg-brandWin/20" onClick={() => move(0)}>Move T1</button>
