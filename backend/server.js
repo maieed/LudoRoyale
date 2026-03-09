@@ -8,19 +8,30 @@ const { connectMongo } = require("./config/mongo");
 const { getRedis } = require("./config/redis");
 const { bindGameSocket } = require("./sockets/gameSocket");
 
+const normalizeOrigin = (origin) => String(origin || "").trim().replace(/\/$/, "");
+
 const bootstrap = async () => {
   const app = buildApp();
   const server = http.createServer(app);
 
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((origin) => normalizeOrigin(origin))
+    .filter(Boolean);
+
   const io = new Server(server, {
     cors: {
-      origin: (process.env.ALLOWED_ORIGINS || "").split(",")
+      origin: allowedOrigins.length ? allowedOrigins : true
     },
     transports: ["websocket", "polling"]
   });
 
   await connectMongo(process.env.MONGO_URI);
   const redis = getRedis(process.env.REDIS_URL);
+
+  // Fail fast so Render clearly shows Redis auth/network issues during boot.
+  await redis.ping();
+  console.log("Redis PING successful");
 
   bindGameSocket(io, redis);
 
