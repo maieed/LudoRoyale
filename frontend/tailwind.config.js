@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./index.html", "./react-ui/**/*.{js,jsx}", "./components/**/*.{js,jsx}", "./pages/**/*.{js,jsx}", "./phaser-game/**/*.{js,jsx}"],
+  content: ["./index.html", "./react-ui/**/*.{js,jsx}", "./components/**/*.{js,jsx}", "./pages/**/*.{js,jsx}", "./phaser-game/**/*.{js,jsx}", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
       colors: {

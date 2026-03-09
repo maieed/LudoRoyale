@@ -6,6 +6,7 @@ const { Server } = require("socket.io");
 const { buildApp } = require("./app");
 const { connectMongo } = require("./config/mongo");
 const { getRedis } = require("./config/redis");
+const { createInMemoryRedis } = require("./services/inMemoryRedis");
 const { bindGameSocket } = require("./sockets/gameSocket");
 
 const normalizeOrigin = (origin) => String(origin || "").trim().replace(/\/$/, "");
@@ -27,11 +28,17 @@ const bootstrap = async () => {
   });
 
   await connectMongo(process.env.MONGO_URI);
-  const redis = getRedis(process.env.REDIS_URL);
 
-  // Fail fast so Render clearly shows Redis auth/network issues during boot.
-  await redis.ping();
-  console.log("Redis PING successful");
+  let redis;
+  try {
+    redis = getRedis(process.env.REDIS_URL);
+    await redis.ping();
+    console.log("Redis PING successful");
+  } catch (err) {
+    console.error("Redis unavailable. Falling back to in-memory cache:", err.message);
+    if (redis?.disconnect) redis.disconnect();
+    redis = createInMemoryRedis();
+  }
 
   bindGameSocket(io, redis);
 

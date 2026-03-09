@@ -87,8 +87,18 @@ const bindGameSocket = (io, redis) => {
       state.diceValue = null;
       await gameStateService.saveState(roomId, state);
 
+      const tokenMovePayload = {
+        roomId,
+        playerId,
+        move: result.move,
+        kill: result.kill,
+        state
+      };
+
+      io.to(roomId).emit("tokenMove", tokenMovePayload);
       io.to(roomId).emit("boardUpdate", {
         roomId,
+        playerId,
         state,
         move: result.move,
         kill: result.kill,
@@ -144,8 +154,19 @@ const runBotTurnIfNeeded = async (io, gameStateService, roomId, walletService) =
       again.diceValue = null;
       await gameStateService.saveState(roomId, again);
 
+      const tokenMovePayload = {
+        roomId,
+        playerId: current.id,
+        move: result.move,
+        kill: result.kill,
+        state: again,
+        botStyle: decision.style
+      };
+
+      io.to(roomId).emit("tokenMove", tokenMovePayload);
       io.to(roomId).emit("boardUpdate", {
         roomId,
+        playerId: current.id,
         state: again,
         move: result.move,
         kill: result.kill,
