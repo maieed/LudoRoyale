@@ -1,0 +1,80 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  backend_1:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    env_file:
+      - ../backend/.env.example
+    environment:
+      - PORT=4000
+      - MONGO_URI=mongodb://mongo:27017/ludo
+      - REDIS_URL=redis://redis:6379
+      - ALLOWED_ORIGINS=http://localhost
+    depends_on:
+      - redis
+      - mongo
+
+  backend_2:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    env_file:
+      - ../backend/.env.example
+    environment:
+      - PORT=4000
+      - MONGO_URI=mongodb://mongo:27017/ludo
+      - REDIS_URL=redis://redis:6379
+      - ALLOWED_ORIGINS=http://localhost
+    depends_on:
+      - redis
+      - mongo
+
+  game_server:
+    build:
+      context: ../backend
+      dockerfile: ../deploy/game-server.Dockerfile
+    env_file:
+      - ../backend/.env.example
+    environment:
+      - PORT=4100
+      - MONGO_URI=mongodb://mongo:27017/ludo
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+      - mongo
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    environment:
+      - VITE_API_URL=http://localhost/api
+      - VITE_SOCKET_URL=http://localhost
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      - backend_1
+      - backend_2
+      - frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+
+volumes:
+  mongo_data:
